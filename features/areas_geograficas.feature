@@ -1,36 +1,40 @@
-# language: pt
-Funcionalidade: Áreas geográficas do projeto
+# DECISÃO PENDENTE: o RF04 pede um único formato para o protótipo.
+# Os cenários usam KMZ. A tabela da Ambiens (Banco Georreferenciado) indica
+# que os dados vêm em shapefile ou KMZ; confirmar qual será o formato do protótipo.
+@RF04
+Feature: Importação de dados geográficos do projeto
   Como membro da equipe de um projeto
-  Quero importar as áreas do projeto a partir de arquivos geográficos
-  Para que elas sejam exibidas no mapa sem precisar usar o QGIS
+  Quero importar os dados vetoriais produzidos no QGIS
+  Para que as camadas do projeto fiquem associadas a ele e armazenadas na plataforma
 
-  Contexto:
-    Dado que "ana.souza" está autenticada
-    E que existe o projeto de contrato "2024-015" cuja equipe inclui "ana.souza"
+  Background:
+    Given "ana@ambiens.com.br" está autenticada
+    And existe o projeto de contrato "2024-015"
 
-  Esquema do Cenário: Importar área a partir de arquivo geográfico
-    Quando ela adiciona ao projeto "2024-015" a área "<nome da área>" com o arquivo "<arquivo>"
-    Então a área "<nome da área>" é salva no projeto
-    E a área é exibida no mapa na localização correta
+  Scenario Outline: Importar camadas com diferentes tipos de geometria
+    When ela importa no projeto "2024-015" a camada "<camada>" com o arquivo "<arquivo>"
+    Then a camada "<camada>" fica associada ao projeto "2024-015"
+    And a camada é armazenada com geometria do tipo "<geometria>"
 
-    Exemplos:
-      | nome da área      | arquivo                   |
-      | Limite do terreno | limite_terreno.kmz        |
-      | Área de matrícula | area_matricula.kml        |
-      | Área de estudo    | area_estudo_shapefile.zip |
+    Examples:
+      | camada               | arquivo                   | geometria |
+      | Limite da área       | limite_area.kmz           | Polígono  |
+      | Cursos d'água        | cursos_dagua.kmz          | Linha     |
+      | Nascentes            | nascentes.kmz             | Ponto     |
 
-  Cenário: Projeto com mais de uma área
-    Dado que o projeto "2024-015" possui as áreas "Limite do terreno" e "Área de matrícula"
-    Quando ela abre o projeto "2024-015"
-    Então as duas áreas são listadas, cada uma com seu nome
-    E as duas áreas são exibidas no mapa
+  Scenario: Projeto com várias camadas
+    When ela importa no projeto "2024-015" as camadas:
+      | camada                | arquivo                    |
+      | Limite da área        | limite_area.kmz            |
+      | Restrições ambientais | restricoes_ambientais.kmz  |
+    Then o projeto "2024-015" passa a ter 2 camadas, cada uma com seu nome
 
-  Cenário: Arquivo em formato não suportado
-    Quando ela tenta adicionar uma área com o arquivo "planta.dwg"
-    Então a importação é recusada
-    E a mensagem "Formato não suportado. Use KML, KMZ ou Shapefile" é exibida
+  Scenario: Importar arquivo em formato não suportado
+    When ela tenta importar no projeto "2024-015" o arquivo "limite_area.dwg"
+    Then a importação é recusada
+    And a mensagem "Formato não suportado. Envie um arquivo KMZ" é exibida
 
-  Cenário: Arquivo geográfico inválido
-    Quando ela tenta adicionar uma área com o arquivo corrompido "limite_corrompido.kmz"
-    Então a importação é recusada
-    E a mensagem "Não foi possível ler a geometria do arquivo" é exibida
+  Scenario: Importar arquivo sem geometria válida
+    When ela tenta importar no projeto "2024-015" o arquivo "limite_corrompido.kmz"
+    Then a importação é recusada
+    And a mensagem "Não foi possível ler a geometria do arquivo" é exibida

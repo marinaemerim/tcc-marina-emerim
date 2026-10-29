@@ -1,23 +1,29 @@
-# language: pt
-Funcionalidade: Autenticação de usuários
+@RF01
+Feature: Autenticação com conta Google
   Como colaborador da Ambiens
-  Quero acessar a plataforma com meu nome de usuário e senha
-  Para que apenas funcionários da empresa consultem os dados dos projetos
+  Quero entrar na plataforma com minha conta Google autorizada
+  Para que apenas pessoas autorizadas consultem os dados dos projetos
 
-  Contexto:
-    Dado que existe o usuário "ana.souza" com a senha "Senha@123"
+  Background:
+    Given o e-mail "ana@ambiens.com.br" está autorizado na plataforma
 
-  Cenário: Login com credenciais válidas
-    Quando o usuário informa o nome "ana.souza" e a senha "Senha@123"
-    Então o acesso à plataforma é liberado
-    E o mapa de projetos é exibido
+  Scenario: Entrar com uma conta Google autorizada
+    When o usuário entra com a conta Google "ana@ambiens.com.br"
+    Then o acesso à plataforma é liberado
+    And o mapa de projetos é exibido
 
-  Cenário: Login com senha incorreta
-    Quando o usuário informa o nome "ana.souza" e a senha "senhaErrada"
-    Então o acesso à plataforma é negado
-    E a mensagem "Usuário ou senha inválidos" é exibida
+  Scenario: Entrar com uma conta Google não autorizada
+    When o usuário entra com a conta Google "visitante@gmail.com"
+    Then o acesso à plataforma é negado
+    And a mensagem "Esta conta não tem permissão para acessar a plataforma" é exibida
 
-  Cenário: Acesso a uma página interna sem estar autenticado
-    Dado que o usuário não está autenticado
-    Quando ele tenta acessar a página de projetos
-    Então ele é redirecionado para a tela de login
+  Scenario: Acessar uma página interna sem estar autenticado
+    Given o usuário não está autenticado
+    When ele tenta acessar a página de projetos
+    Then ele é redirecionado para a tela de login
+
+  Scenario: Sair da plataforma
+    Given "ana@ambiens.com.br" está autenticada
+    When ela sai da plataforma
+    Then ela é redirecionada para a tela de login
+    And não consegue mais acessar a página de projetos
